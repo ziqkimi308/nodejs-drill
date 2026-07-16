@@ -1,4 +1,17 @@
 import { NextFunction, Request, Response } from "express";
+import { ValidationError, validationResult } from "express-validator";
+import { error } from "node:console";
+
+// Non-persistent user data
+type User = {
+	id: number;
+	name: string;
+	email: string;
+	age?: number;
+};
+
+let users: User[] = [];
+let nextId = 1;
 
 export const healthCheck = (req: Request, res: Response) => {
 	res.json({
@@ -15,7 +28,7 @@ export const getUserById = async (
 	try {
 		/**
 		 * @types/express defines req.params as ParamsDictionary which is { [key: string]: string | string[] }
-		 * 
+		 *
 		 * But parseInt function signature only accepts string like shown here
 		 * parseInt(string: string, radix?: number): number
 		 *
@@ -24,21 +37,71 @@ export const getUserById = async (
 
 		const id = parseInt(String(req.params.id));
 
-		// Validation
+		// Handle invalid id
 		if (isNaN(id) || id < 1) {
 			return res.status(400).json({ error: "ID must be a positive integer" });
 		}
 
-		// Simulate database lookup
-		if (id > 10) {
-			return res.status(404).json({ error: "User not found" });
+		const user = users.find((usr) => usr.id === id);
+		if (!user) {
+			return res.status(404).json({ error: 'User not found' });
 		}
 
 		// Success
 		res.json({
 			success: true,
-			data: { id, name: `User ${id}` },
+			data: user,
 		});
+	} catch (error) {
+		next(error);
+	}
+};
+
+export const createUser = async (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+) => {
+	try {
+		/**
+		 * - 'validationResult' checks if request is in the expected format.
+		 * - This is like Laravel's request validation.
+		 *
+		 * - validationResult() returns object.
+		 * - that is why we convert using '.array()'
+		 */
+
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(400).json({
+				error: "Validation failed",
+				details: errors.array().map((e) => ({
+					field: (e as any).path,
+					message: e.msg,
+				})),
+			});
+		}
+
+		/**
+		 * - Sanitization of req is not needed here.
+		 * - It happened in routing.
+		 */
+
+		const { name, email, age } = req.body;
+		const newUser: User = {
+			id: nextId++,
+			name: name,
+			email: email,
+			...(age !== undefined && { age })
+		};
+
+		users.push(newUser);
+
+		res.status(201).json({
+			success: true,
+			data: newUser,
+		});
+
 	} catch (error) {
 		next(error);
 	}
