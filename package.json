@@ -4,7 +4,8 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"drill:N1": "npx tsx watch phase1/N1-express-ts/index.ts"
+		"drill:N1": "tsx phase1/N1-express-ts/index.ts",
+		"drill:N2": "tsx src/index.ts"
 	},
 	"keywords": [],
 	"author": "",
