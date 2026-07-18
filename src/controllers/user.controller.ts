@@ -1,17 +1,6 @@
 import { NextFunction, Request, Response } from "express";
-import { ValidationError, validationResult } from "express-validator";
-import { error } from "node:console";
-
-// Non-persistent user data
-type User = {
-	id: number;
-	name: string;
-	email: string;
-	age?: number;
-};
-
-let users: User[] = [];
-let nextId = 1;
+import { validationResult } from "express-validator";
+import prisma from "../lib/prisma";
 
 export const healthCheck = (req: Request, res: Response) => {
 	res.json({
@@ -42,9 +31,12 @@ export const getUserById = async (
 			return res.status(400).json({ error: "ID must be a positive integer" });
 		}
 
-		const user = users.find((usr) => usr.id === id);
+		// const user = users.find((usr) => usr.id === id);
+		const user = await prisma.user.findUnique({
+			where: { id },
+		});
 		if (!user) {
-			return res.status(404).json({ error: 'User not found' });
+			return res.status(404).json({ error: "User not found" });
 		}
 
 		// Success
@@ -88,21 +80,32 @@ export const createUser = async (
 		 */
 
 		const { name, email, age } = req.body;
-		const newUser: User = {
-			id: nextId++,
-			name: name,
-			email: email,
-			...(age !== undefined && { age })
-		};
-
-		users.push(newUser);
+		const newUser = await prisma.user.create({
+			data: {
+				name: name,
+				email: email,
+				...(age !== undefined && { age }),
+			},
+		});
 
 		res.status(201).json({
 			success: true,
 			data: newUser,
 		});
+	} catch (error: any) {
+		/**
+		 * Handle prisma error for duplicate email
+		 * P2002 is built in error code for indicates violation of '@unique' field
+		 */
 
-	} catch (error) {
+		if (error.code === "P2002") {
+			return res.status(409).json({
+				error: "Email already exists",
+				details: [
+					{ field: "email", message: "This email is already registered" },
+				],
+			});
+		}
 		next(error);
 	}
 };

@@ -1,0 +1,18 @@
+curl -X POST http://localhost:3000/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Alice", "email": "alice@test.com", "age": 30}'
+
+###
+curl -X POST http://localhost:3000/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Bob", "email": "alice@test.com", "age": 25}'
+
+###
+curl -X POST http://localhost:3000/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "JohnWick", "email": "johnwick@test.com", "age": 999}'
+
+###
+curl -X POST http://localhost:3000/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Sarah", "email": "sarah@test.com", "age": 18}'

@@ -1,0 +1,18 @@
+services:
+  # service name
+  postgres:
+    # image name
+    image: postgres:16-alpine
+    # container name
+    container_name: backend-postgres-nodejs-phase1
+    environment: 
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: backend_night_nodejs_phase1
+    # ports and volumes can accept list of items, hence the hypen
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
